@@ -7,6 +7,7 @@ server = app.listen(4000, function () {
 });
 var cors = require("cors");
 const User = require("../server/models/user.js");
+const Message = require("../server/models/mess.js");
 var MongoClient = require("mongodb").MongoClient;
 var url = "mongodb://localhost:27017/";
 mongoose.connect("mongodb://localhost:27017/AppChat", {
@@ -67,6 +68,7 @@ app.post("/signup", function (req, res) {
     address: req.body.address,
   });
   User.findOne({ username: Users.username }, (err, docs) => {
+    console.log(docs);
     if (docs) {
       return res.send({ status: 400, message: "Sai" });
     } else {
@@ -80,6 +82,40 @@ app.post("/signup", function (req, res) {
         }
       });
     }
+  });
+});
+app.post("/saveMess", function (req, res) {
+  const Mess = new Message({
+    usersend: req.body.usersend,
+    message: req.body.message,
+  });
+  console.log(req.body);
+  MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function (err, db) {
+    if (err) throw err;
+    var dbo = db.db("AppChat");
+    let a = dbo.collection("message").insertOne(Mess, function (err) {
+      if (err) throw err;
+      console.log(Mess);
+      return res.send({ status: 200, Mess });
+    });
+  });
+});
+app.get("/readMess", (req, res) => {
+  var MongoClient = require("mongodb").MongoClient;
+  var url = "mongodb://localhost:27017/";
+
+  MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function (err, db) {
+    if (err) throw err;
+    var dbo = db.db("AppChat");
+    dbo
+      .collection("message")
+      .find({})
+      .toArray(function (err, result) {
+        if (err) throw err;
+        console.log(result);
+        return res.send({ result });
+        db.close();
+      });
   });
 });
 app.post("/login", function (req, res) {
@@ -107,6 +143,7 @@ app.post("/login", function (req, res) {
     // console.log(a);
   });
 });
+
 app.get("/", (req, res) => {
   res.send("Server dang chay");
 });
